@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE log4j:configuration PUBLIC "-//APACHE//DTD LOG4J 1.2//EN" "log4j.dtd">
+<log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/">
+
+	<!-- Appenders -->
+	<!--
+		전달된 로그를 어디에 출력할 지 결정(콘솔, 파일, db)
+			ConsoleAppender		 : 로그를 콘솔에 출력하기 위한 Appender
+			JDBCAppender 		 : 로그를 DB에 출력하기 위한 Appender
+			FileAppender 		 : 로그를 파일에 출력하기 위한 Appender
+			RollingFileAppender  : FileAppender를 보완한 개념
+								      일정 조건 후에 기존 파일을 백업파일로 바꾸고 다시 처음부터 시작
+								   (ex. DailyRollingFileAppender : 하루가 지나면 새로 시작)
+								   
+		layout
+			전달된 로그를 어떻게 출력할 지 결정
+			
+		%p : debug, info, warn, error, fatal 등의 priority 출력
+		%m : 로그 내용 출력
+		%d : 로그 발생한 시간 출력
+		%t : 로그 이벤트가 발생된 스레드 이름 출력
+		%n : 개행문자 출력
+		%c : package 출력
+		%c{n} : n만큼의 package를 가장 하단부터 역으로 출력
+				카테고리가 a.b.c처럼 되어있다면 %c{2}는 b.c 출력
+		%C : 호출자의 클래스 명 출력
+			 클래스 구조가 org.apache.xyz.SomeClass처럼 되어있다면 %C{2}는 xyz.SomeClass출력
+		%F : 로깅이 발생한 프로그램 파일 명 출력
+		%l : 로깅이 발생한 caller 정보 출력
+		%L : 로깅이 발생한 caller의 라인 수 출력
+		%M : 로깅이 발생한 method이름 출력
+		%r : 애플리케이션 시작 이후부터 로깅이 발생한 시점의 시간(밀리세컨드) 출력
+    -->
+	<appender name="console" class="org.apache.log4j.ConsoleAppender">
+		<param name="Target" value="System.out" />
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="%-5p: %c, %t(%L) - %m%n" />
+		</layout>
+	</appender>
+	
+	<appender name="myconsole" class="org.apache.log4j.ConsoleAppender">
+		<param name="Target" value="System.out" /> 
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="%-5p: %c{1}.%M{%L} - %m%n" />
+		</layout>
+	</appender>
+	
+	<!-- 날짜 별 로그인 로그 파일 생성 appender -->
+	<appender name="myDailyRollingFile" class="org.apache.log4j.DailyRollingFileAppender">
+		<param name="File" value="/logs/member/login.log"/>
+		<param name="Appender" value="true"/>
+		<param name="encoding" value="UTF-8"/>
+		<param name="DatePattern" value="'.'yyyyMMdd"/>
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="%d{yy-MM-dd HH:mm:ss} [%p] %c{1}.%M{%L} - %m%n"/>
+		</layout>
+	</appender>
+	
+	<appender name="sqlLogger" class="org.apache.log4j.ConsoleAppender">
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="%-5p: %m%n"/>
+		</layout>
+	</appender>
+	
+	<!-- Application Loggers -->
+	<!-- 
+		로그 레벨 
+			DEBUG < INFO < WARN < ERROR < FATAL 
+			
+			FATAL : 아주 심각한 에러
+			ERROR : 어떤 
+			WARN  : 프로그램 실행에는 문제 없지만 향후 시스템 에러의 원인이 될 수 있는 경고성 메시지
+			INFO  : 상태 변경과 같은 정보성 메시지
+			DEBUG : 개발 시 디버그 용도로 사용하는 메세지
+			TRACE : 디버그 레벨이 너무 광범위한 것을 해결하기 위해 좀 더 상세한 이벤트를 나타냄(경로 추적)
+			
+			
+	 -->
+	
+	<logger name="com.kh.spring">
+		<level value="debug" />
+	</logger>
+	
+	
+	<!-- 3rdparty Loggers -->
+	<logger name="org.springframework.core">
+		<level value="info" />
+	</logger>
+	
+	<logger name="org.springframework.beans">
+		<level value="info" />
+	</logger>
+	
+	<logger name="org.springframework.context">
+		<level value="info" />
+	</logger>
+
+	<logger name="org.springframework.web">
+		<level value="info" />
+	</logger>
+	
+	<logger name="com.kh.spring.member.controller.MemberController" additivity="false">
+		<level value="debug" />
+		<appender-ref ref="myconsole" />
+	</logger>
+	
+	<logger name="com.kh.spring.common.Interceptor.TestInterceptor" additivity="false">
+		<level value="debug" />
+		<appender-ref ref="myconsole" />
+	</logger>
+	
+	<logger name="com.kh.spring.common.Interceptor.LoginInterceptor" additivity="false">
+		<level value="info" />
+		<appender-ref ref="myDailyRollingFile" />
+	</logger>
+	
+	<logger name="jdbc.sqlonly" additivity="false">
+		<level value="info"/>
+		<appender-ref ref="sqlLogger"/>
+	</logger>
+	<logger name="jdbc.resultsettable" additivity="false">
+		<level value="info"/>
+		<appender-ref ref="sqlLogger"/>
+	</logger>
+	
+	
+	<!-- Root Logger -->
+	<!-- 모든 logger들의 출력이 rootLogger를 통해서 이루어짐 -->
+	<root>
+		<priority value="warn" />
+		<appender-ref ref="console" />
+	</root>
+	
+</log4j:configuration>
